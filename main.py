@@ -8,5 +8,6 @@ if __name__ == "__main__":
     load_dotenv()
     host = os.getenv('HOST')
     port = os.getenv('PORT')
+    key = os.getenv('KEY')
 
-    system.start_server(routes.get_route(), host, port)
+    system.start_server(routes.get_all_routes(), host, port, key)
