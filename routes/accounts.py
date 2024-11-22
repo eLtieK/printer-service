@@ -32,13 +32,15 @@ def callback():
     id_info = id_token.verify_oauth2_token(
         id_token=credentials._id_token,
         request=token_request,
-        audience=google_auth.GOOGLE_CLIENT_ID
+        audience=google_auth.GOOGLE_CLIENT_ID,
+        clock_skew_in_seconds=60 # Allow for up to 60 seconds of clock skew
     )
     
     #Lưu thông tin người dùng vào session
     session["google_id"] = id_info.get("sub") #ID duy nhất của người dùng
     session["name"] = id_info.get("name")
-    session["email"] = id_info.get("mail")
+    session["email"] = id_info.get("email")
+    session["role"] = accounts_controller.get_user_role(session["email"])
 
     #Chuyển hướng.
     return redirect("/account/protected_area")
