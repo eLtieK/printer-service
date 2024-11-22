@@ -12,17 +12,18 @@ CORS(account_route, supports_credentials=True, origins=["http://localhost:3000"]
 
 @account_route.route('/account/login')
 def login():
-    authorization_url, state = google_auth.flow.authorization_url()
+    authorization_url, state = google_auth.flow.authorization_url() #url uỷ quyền cho OAuth2 của google
     session["state"] = state
-    return redirect(authorization_url)
+    return redirect(authorization_url) #chuyển đến trang uỷ quyền
 
 @account_route.route('/account/callback')
 def callback():
-    google_auth.flow.fetch_token(authorization_response=request.url)
+    google_auth.flow.fetch_token(authorization_response=request.url) #lấy token OAuth2
     
-    if not session["state"] == request.args["state"]:
+    if not session["state"] == request.args["state"]: #xác thực tham số state
         abort(500) 
 
+    #Xác thực và giải mã ID token để lấy thông tin người dùng
     credentials = google_auth.flow.credentials
     request_session = requests.session()
     cached_session = cachecontrol.CacheControl(request_session)
@@ -34,12 +35,17 @@ def callback():
         audience=google_auth.GOOGLE_CLIENT_ID
     )
     
-    session["google_id"] = id_info.get("sub")
+    #Lưu thông tin người dùng vào session
+    session["google_id"] = id_info.get("sub") #ID duy nhất của người dùng
     session["name"] = id_info.get("name")
+    session["email"] = id_info.get("mail")
+
+    #Chuyển hướng.
     return redirect("/account/protected_area")
 
 @account_route.route('/account/logout')
 def logout():
+    #Xóa session để đăng xuất người dùng.
     session.clear()
     return redirect("/account/")
 
