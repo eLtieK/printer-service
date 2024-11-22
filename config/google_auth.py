@@ -4,8 +4,8 @@ import os
 import pathlib
 
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
-client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json") #đường dẫn file json
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" #chạy trên http thay vì https
 
 flow = Flow.from_client_secrets_file(
     client_secrets_file=client_secrets_file,
