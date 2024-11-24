@@ -10,6 +10,15 @@ from google.oauth2 import id_token
 account_route = Blueprint('account_route', __name__)
 CORS(account_route, supports_credentials=True, origins=["http://localhost:3000"]) #link toi fe
 
+
+@account_route.route('/account/create', methods=['POST'])
+def create():
+    data = request.get_json() 
+    email = data.get('email') 
+    role = data.get('role')
+
+    return accounts_controller.create_account(email, role)
+
 @account_route.route('/account/login')
 def login():
     authorization_url, state = google_auth.flow.authorization_url() #url uỷ quyền cho OAuth2 của google
