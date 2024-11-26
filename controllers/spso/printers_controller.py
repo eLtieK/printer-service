@@ -143,6 +143,11 @@ def update_printer(printer_id, data):
 
 def report_issue(printer_id, issue_description):
     try:
+        if not printer_id or not issue_description:
+            return jsonify({
+                "status": "error",
+                "message": "Printer ID and issue description are required."
+            }), 400
         collection = printers.printers_collection()
         result = collection.update_one(
             {"_id": ObjectId(printer_id)},
