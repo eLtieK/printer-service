@@ -18,5 +18,4 @@ def report_issue():
     data = request.get_json()
     printer_id = data.get('printer_id')
     issue_description = data.get('issue_description')
-    result = printers_controller.report_issue(printer_id, issue_description)
-    return result
+    return printers_controller.report_issue(printer_id, issue_description)
