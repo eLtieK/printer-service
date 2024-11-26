@@ -9,6 +9,8 @@ def start_server(routes, my_host, my_port, key):
     app.secret_key = key
     
     for route in routes:
-        app.register_blueprint(route)
+        print(route)
+        blueprint, prefix = route
+        app.register_blueprint(blueprint, url_prefix=prefix)
 
     app.run(host=my_host, port=my_port, debug=True)
