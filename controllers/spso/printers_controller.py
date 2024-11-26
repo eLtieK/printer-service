@@ -141,7 +141,31 @@ def update_printer(printer_id, data):
             "message": str(e)
         }), 500
 
+def report_issue(printer_id, issue_description):
+    try:
+        collection = printers.printers_collection()
+        result = collection.update_one(
+            {"_id": ObjectId(printer_id)},
+            {"$push": {"maintenance_history": {"issue": issue_description, "status": "reported"}}}
+        )
+
+        if result.matched_count == 1:
+            return jsonify({
+                "status": "success",
+                "message": f"Issue reported for printer with ID {printer_id}."
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": f"No printer found with ID {printer_id}."
+            }), 404
+    except PyMongoError as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 
 
-    
+
+
