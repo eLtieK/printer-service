@@ -1,7 +1,8 @@
-from flask import Blueprint, abort, request, session, redirect
+from flask import Blueprint, abort, jsonify, request, session, redirect
 from flask_cors import CORS
 import requests
 from controllers import accounts_controller
+from middlewares import auth
 from config import google_auth
 import cachecontrol
 import google
@@ -20,8 +21,13 @@ def create():
 
     return accounts_controller.create_account(email, role)
 
+@account_route.route('/get', methods=['GET'])
+def get():
+    return accounts_controller.get_all_accounts()
+
 @account_route.route('/login')
 def login():
+    session.clear()
     authorization_url, state = google_auth.flow.authorization_url() #url uỷ quyền cho OAuth2 của google
     session["state"] = state
     return redirect(authorization_url) #chuyển đến trang uỷ quyền
@@ -35,6 +41,8 @@ def callback():
 
     #Xác thực và giải mã ID token để lấy thông tin người dùng
     credentials = google_auth.flow.credentials
+    session["access_token"] = credentials.token
+
     request_session = requests.session()
     cached_session = cachecontrol.CacheControl(request_session)
     token_request = google.auth.transport.requests.Request(session=cached_session)
@@ -47,13 +55,18 @@ def callback():
     )
     
     #Lưu thông tin người dùng vào session
-    session["google_id"] = id_info.get("sub") #ID duy nhất của người dùng
-    session["name"] = id_info.get("name")
     session["email"] = id_info.get("email")
     session["role"] = accounts_controller.get_user_role(session["email"])
 
     #Chuyển hướng.
-    return redirect("/account/protected_area")
+    return jsonify({
+        "status": "success",
+        "data": {
+            "email": session.get("email"),
+            "role": session.get("role"),
+            "access_token": session.get("access_token")
+        }
+    })
 
 @account_route.route('/logout')
 def logout():
@@ -66,6 +79,6 @@ def index():
     return "Hello world! <a href='/account/login'> <button>Login</button> </a>" 
 
 @account_route.route('/protected_area')
-@accounts_controller.login_is_required
+@auth.login_is_required
 def protected_area():
     return "Protected! <a href='/account/logout'> <button>Logout</button> </a>"

@@ -40,7 +40,7 @@ def create_printer(data):
 
         collection = printers.printers_collection()
         result = collection.insert_one(data)
-        data.pop('_id', None)
+        data["_id"] = str(data["_id"])
 
         return jsonify({
             "status": "success",
@@ -53,14 +53,95 @@ def create_printer(data):
             "message": str(e)
         }), 500
 
-def get_all_printer():
-    collection = printers.printers_collection()
-    printer_list = []
+def get_printer(printer_id):
+    try:
+        printer = printers.printers_collection().find_one({
+            "_id": ObjectId(printer_id)
+        })
+        
+        if not printer:
+            return jsonify({
+                "status": "error",
+                "message": f"No printer found with ID {printer_id}."
+            }), 404
+        
+        # Chuyển đổi ObjectId thành chuỗi 
+        printer['_id'] = str(printer['_id'])
 
-    for printer in collection.find():
-        printer_list.append(printer)
+        return jsonify({
+            "status": "success",
+            "data": printer
+        }), 200
 
-    return printer_list 
+    except PyMongoError as e:
+        print(str(e))
+        return ''
+    
+def get_all_printers():
+    try:
+        collection = printers.printers_collection()
+        printer_list = []
+
+        for printer in collection.find():
+            printer['_id'] =  str(printer['_id'])
+            printer_list.append(printer)
+
+        return printer_list 
+    except PyMongoError as e:
+        print(str(e))
+        return ''
+
+def delete_printer(printer_id):
+    try:
+        collection = printers.printers_collection()
+        result = collection.delete_one({"_id": ObjectId(printer_id)})
+
+        if result.deleted_count == 1:
+            return jsonify({
+                "status": "success",
+                "message": f"Printer with ID {printer_id} has been deleted."
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": f"No printer found with ID {printer_id}."
+            }), 404
+    except PyMongoError as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    
+def update_printer(printer_id, data):
+    try:
+        collection = printers.printers_collection()
+        update_data = {}
+        for key in data:
+            if data[key] is not None:
+                update_data[key] = data[key]
+
+        result = collection.update_one(
+            {"_id": ObjectId(printer_id)},
+            {"$set": update_data}
+        )
+
+        if result.matched_count == 1:
+            return jsonify({
+                "status": "success",
+                "message": f"Printer with ID {printer_id} has been updated."
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": f"No printer found with ID {printer_id}."
+            }), 404
+    except PyMongoError as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
 
 
     

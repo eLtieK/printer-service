@@ -47,21 +47,7 @@ def create_account(email, role):
             "message": str(e)
         }), 500
 
-def login_is_required(function):
-    def wrapper(*args, **kwargs):
-        if "google_id" not in session:
-            return abort(401) #Authorization required
-        elif session.get("role") == "guest": 
-            state_value = session.get("state") 
-            session.clear() # Clear all session data 
-            session["state"] = state_value
-            return "Please provide an appropriate account to access this area <a href='/account'> <button>Return</button> </a>"
-        else: 
-            return function()
-        
-    return wrapper
-
-def get_user_role(email):
+def get_account_role(email):
     try:
         data = accounts.accounts_collection().find_one({
             "email": email
@@ -71,6 +57,21 @@ def get_user_role(email):
             return data['role']
         else:
             return 'guest'
+    except PyMongoError as e:
+        print(str(e))
+        return ''
+    
+def get_all_accounts():
+    try:
+        collection = accounts.accounts_collection()
+        accounts_list = []
+
+        for account in collection.find():
+            account['_id'] =  str(account['_id'])
+            accounts_list.append(account)
+
+        return accounts_list
+    
     except PyMongoError as e:
         print(str(e))
         return ''
