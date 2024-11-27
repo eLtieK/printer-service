@@ -1,7 +1,7 @@
 #logic
 from bson import ObjectId
-from flask import jsonify, session, abort
-from models import accounts
+from flask import jsonify
+from models import accounts, printers
 from pymongo.errors import PyMongoError
 from helper import accounts_helper
     
@@ -30,16 +30,31 @@ def create_account(email, role):
         "role": role
     }
 
+    if (role == "student"):
+        cursor = printers.printers_collection().find({}, {
+            "_id": 1,
+        })
+
+        history = list(cursor)
+        
+        for record in history: 
+            record["report_history"] = [] 
+            record["print_history"] = [] 
+
+        data["paper_count"] = 0
+        data["printer_history"] = history
+
     collection = accounts.accounts_collection()
 
     try:
         result = collection.insert_one(data)
+        data["_id"] = str(data["_id"])
+        for record in data["printer_history"]:
+            record["_id"] = str(record["_id"])
+
         return jsonify({
             "status": "success",
-            "data": {
-                "email": email,
-                "role": role
-            }
+            "data": data
         }), 201
     except PyMongoError as e:
         return jsonify({
@@ -68,6 +83,12 @@ def get_all_accounts():
 
         for account in collection.find():
             account['_id'] =  str(account['_id'])
+
+            if account['role'] == "student":
+                for record in account["printer_history"]:
+                    record["_id"] = str(record["_id"])
+
+
             accounts_list.append(account)
 
         return accounts_list
