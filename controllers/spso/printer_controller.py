@@ -1,5 +1,5 @@
 from bson import ObjectId
-from flask import jsonify, request
+from flask import jsonify
 from models import printers
 from pymongo.errors import PyMongoError
 
@@ -15,6 +15,8 @@ def create_printer(data):
         print_count = 0
         paper_count = data.get('paper_count')
         maintenance_history = []
+        report_history = []
+        print_history = []
         ink = data.get('ink')
 
         if not all([name, model, type, location, status, manufacturer, purchase_date, paper_count, ink]):
@@ -35,6 +37,8 @@ def create_printer(data):
             "print_count": print_count, 
             "paper_count": paper_count, 
             "maintenance_history": maintenance_history, 
+            "report_history": report_history,
+            "print_history": print_history,
             "ink": ink
         }
 
@@ -140,36 +144,6 @@ def update_printer(printer_id, data):
             "status": "error",
             "message": str(e)
         }), 500
-
-def report_issue(printer_id, issue_description):
-    try:
-        if not printer_id or not issue_description:
-            return jsonify({
-                "status": "error",
-                "message": "Printer ID and issue description are required."
-            }), 400
-        collection = printers.printers_collection()
-        result = collection.update_one(
-            {"_id": ObjectId(printer_id)},
-            {"$push": {"maintenance_history": {"issue": issue_description, "status": "reported"}}}
-        )
-
-        if result.matched_count == 1:
-            return jsonify({
-                "status": "success",
-                "message": f"Issue reported for printer with ID {printer_id}."
-            }), 200
-        else:
-            return jsonify({
-                "status": "error",
-                "message": f"No printer found with ID {printer_id}."
-            }), 404
-    except PyMongoError as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
-
 
 
 
