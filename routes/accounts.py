@@ -2,7 +2,7 @@ from flask import Blueprint, abort, jsonify, request, session, redirect
 from flask_cors import CORS
 import requests
 from controllers import accounts_controller
-from middlewares import auth
+from middlewares.auth import login_is_required
 from config import google_auth
 import cachecontrol
 import google
@@ -56,7 +56,7 @@ def callback():
     
     #Lưu thông tin người dùng vào session
     session["email"] = id_info.get("email")
-    session["role"] = accounts_controller.get_user_role(session["email"])
+    session["role"] = accounts_controller.get_account_role(session["email"])
 
     #Chuyển hướng.
     return jsonify({
@@ -79,6 +79,6 @@ def index():
     return "Hello world! <a href='/account/login'> <button>Login</button> </a>" 
 
 @account_route.route('/protected_area')
-@auth.login_is_required
+@login_is_required
 def protected_area():
     return "Protected! <a href='/account/logout'> <button>Logout</button> </a>"
