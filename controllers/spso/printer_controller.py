@@ -1,8 +1,9 @@
 from bson import ObjectId
 from flask import jsonify
-from models import printers
+from models import printers, accounts
 from pymongo.errors import PyMongoError
 from datetime import datetime, timedelta
+from helper import helper
 
 def create_printer(data):
     try:
@@ -45,7 +46,7 @@ def create_printer(data):
 
         collection = printers.printers_collection()
         result = collection.insert_one(data)
-        data["_id"] = str(data["_id"])
+        data = helper.convert_objectid_to_string(data)
 
         return jsonify({
             "status": "success",
@@ -71,7 +72,7 @@ def get_printer(printer_id):
             }), 404
         
         # Chuyển đổi ObjectId thành chuỗi 
-        printer['_id'] = str(printer['_id'])
+        printer = helper.convert_objectid_to_string(printer)
 
         return jsonify({
             "status": "success",
@@ -88,7 +89,7 @@ def get_all_printers():
         printer_list = []
 
         for printer in collection.find():
-            printer['_id'] =  str(printer['_id'])
+            printer = helper.convert_objectid_to_string(printer)
             printer_list.append(printer)
 
         return printer_list 
@@ -161,7 +162,7 @@ def export_printing_report(printer_id, student_id, date_range, start_date, end_d
             start_date = datetime.now() - timedelta(days=datetime.now().weekday())
             end_date = start_date + timedelta(days=7)
         elif date_range == 'monthly':
-            start_date = datetime.now().replace(day=1)
+            start_date = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             end_date = (start_date + timedelta(days=32)).replace(day=1)
         elif start_date and end_date:
             start_date = datetime.strptime(start_date, "%Y-%m-%d")
@@ -171,21 +172,22 @@ def export_printing_report(printer_id, student_id, date_range, start_date, end_d
                 "status": "error",
                 "message": "Invalid date range or custom dates."
             }), 400
-        
-        query["print_history.date"] = {"$gte": start_date, "$lt": end_date}
+        query["print_history.date"] = {"$gte": start_date.strftime("%Y-%m-%d %H:%M:%S"), "$lt": end_date.strftime("%Y-%m-%d %H:%M:%S")}
         
         printers_data = printers.printers_collection().find(query)
         report = []
         
         for printer in printers_data:
             printer_report = {
-                "printer_id": str(printer['_id']),
+                "printer_id": printer['_id'],
                 "name": printer['name'],
                 "model": printer['model'],
+                "location": printer['location'],
                 "total_pages_printed": sum(job['pages'] for job in printer['print_history']),
                 "total_print_jobs": len(printer['print_history']),
                 "print_history": printer['print_history']
             }
+            printer_report = helper.convert_objectid_to_string(printer_report)
             report.append(printer_report)
         
         return jsonify({
@@ -198,7 +200,3 @@ def export_printing_report(printer_id, student_id, date_range, start_date, end_d
             "status": "error",
             "message": str(e)
         }), 500
-
-
-
-

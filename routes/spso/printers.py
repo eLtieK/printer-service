@@ -46,7 +46,7 @@ def update_printer(printer_id):
     data = request.get_json()
     return printer_controller.update_printer(printer_id, data)
 
-@spso_printers_route.route('/export-report', methods=['GET'])
+@spso_printers_route.route('/export_printing_report', methods=['GET'])
 @login_is_required
 @spso_is_required
 def export_printing_report():
@@ -60,9 +60,10 @@ def export_printing_report():
         start_date (str): Optional. Start date for custom date range in 'YYYY-MM-DD' format.
         end_date (str): Optional. End date for custom date range in 'YYYY-MM-DD' format.
     """
-    printer_id = request.args.get('printer_id')
-    student_id = request.args.get('student_id')
-    date_range = request.args.get('date_range', 'daily')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+    data = request.get_json()
+    printer_id = data.get('printer_id')
+    student_id = data.get('student_id')
+    date_range = data.get('date_range', 'daily')
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
     return printer_controller.export_printing_report(printer_id, student_id, date_range, start_date, end_date)

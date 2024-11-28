@@ -2,6 +2,7 @@ from bson import ObjectId
 from flask import jsonify
 from models import accounts
 from pymongo.errors import PyMongoError
+from helper import helper
 
 def get_accounts_by_role(role):
     if not role:
@@ -21,11 +22,7 @@ def get_accounts_by_role(role):
         accounts_list = []
 
         for account in collection.find({"role": role}):
-            account['_id'] =  str(account['_id'])
-            if account['role'] == "student":
-                for record in account["printer_history"]:
-                    record["_id"] = str(record["_id"])
-
+            account = helper.convert_objectid_to_string(account)
             accounts_list.append(account)
 
         return jsonify({

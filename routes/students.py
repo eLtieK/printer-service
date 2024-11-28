@@ -37,8 +37,14 @@ def get_all_printers():
 def get_printer(printer_id):
     return printer_controller.get_printer(printer_id)
 
-# @students_route.route('/print', methods=['POST'])
-# @login_is_required
-# @student_is_required
-# def print():
+@students_route.route('/print', methods=['POST'])
+@login_is_required
+@student_is_required
+def print():
+    data = request.get_json()
+    printer_id = data.get('printer_id')
+    student_id = data.get('student_id')
+    file_name = data.get('file_name')
+    page_count = data.get('page_count')
+    return student_controller.print(printer_id, student_id, file_name, page_count)
     
