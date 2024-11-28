@@ -2,6 +2,7 @@ from bson import ObjectId
 from flask import jsonify
 from models import printers
 from pymongo.errors import PyMongoError
+from datetime import datetime, timedelta
 
 def create_printer(data):
     try:
@@ -139,6 +140,59 @@ def update_printer(printer_id, data):
                 "status": "error",
                 "message": f"No printer found with ID {printer_id}."
             }), 404
+    except PyMongoError as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+def export_printing_report(printer_id, student_id, date_range, start_date, end_date):
+    try:
+        query = {}
+        if printer_id:
+            query["_id"] = ObjectId(printer_id)
+        if student_id:
+            query["print_history.student_id"] = ObjectId(student_id)
+        
+        if date_range == 'daily':
+            start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date + timedelta(days=1)
+        elif date_range == 'weekly':
+            start_date = datetime.now() - timedelta(days=datetime.now().weekday())
+            end_date = start_date + timedelta(days=7)
+        elif date_range == 'monthly':
+            start_date = datetime.now().replace(day=1)
+            end_date = (start_date + timedelta(days=32)).replace(day=1)
+        elif start_date and end_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid date range or custom dates."
+            }), 400
+        
+        query["print_history.date"] = {"$gte": start_date, "$lt": end_date}
+        
+        printers_data = printers.printers_collection().find(query)
+        report = []
+        
+        for printer in printers_data:
+            printer_report = {
+                "printer_id": str(printer['_id']),
+                "name": printer['name'],
+                "model": printer['model'],
+                "total_pages_printed": sum(job['pages'] for job in printer['print_history']),
+                "total_print_jobs": len(printer['print_history']),
+                "print_history": printer['print_history']
+            }
+            report.append(printer_report)
+        
+        return jsonify({
+            "status": "success",
+            "data": report
+        }), 200
+
     except PyMongoError as e:
         return jsonify({
             "status": "error",
