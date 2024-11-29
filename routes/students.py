@@ -37,7 +37,7 @@ def get_all_printers():
 def get_printer(printer_id):
     return printer_controller.get_printer(printer_id)
 
-@students_route.route('/print', methods=['POST'])
+@students_route.route('/print_document', methods=['POST'])
 @login_is_required
 @student_is_required
 def print():
@@ -46,5 +46,14 @@ def print():
     student_id = data.get('student_id')
     file_name = data.get('file_name')
     page_count = data.get('page_count')
-    return student_controller.print(printer_id, student_id, file_name, page_count)
+    return student_controller.print_document(printer_id, student_id, file_name, page_count)
+
+@students_route.route('/add_page', methods=['POST'])
+@login_is_required
+@student_is_required
+def add_page():
+    data = request.get_json()
+    student_id = data.get('student_id')
+    page = data.get('page')
+    return student_controller.add_page(student_id, page)
     
