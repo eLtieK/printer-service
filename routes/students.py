@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from flask import Blueprint, request
 from flask_cors import CORS
-from controllers import student_controller
+from controllers import student_controller, payment_controller
 from controllers.spso import printer_controller
 from middlewares.auth import student_is_required, login_is_required
 import pathlib
@@ -56,4 +56,12 @@ def add_page():
     student_id = data.get('student_id')
     page = data.get('page')
     return student_controller.add_page(student_id, page)
+    
+@students_route.route('/create_payment', methods=['POST'])
+# @login_is_required
+# @student_is_required
+def create_payment():
+    data = request.get_json()
+
+    return payment_controller.create_payment(data)
     
