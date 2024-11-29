@@ -1,3 +1,7 @@
+from bson import ObjectId
+from flask import jsonify
+from models import printers
+
 def check_valid_page_count(page_count):
     if not isinstance(page_count, int) or page_count <= 0:
         return False
@@ -30,3 +34,17 @@ def calculate_ink_usage(ink, pages_to_print):
         ink_used_percentage = ink_level  # Nếu không đủ mực, sẽ dùng hết
 
     return ink_used_percentage  # Trả về lượng mực sẽ bị tiêu thụ
+
+def check_is_printer(printer_id):
+    if not printer_id:
+        return False, jsonify({
+            "status": "error",
+            "message": "All fields are required: printer ID"
+        }), 400
+
+    printer = printers.printers_collection().find_one({"_id": ObjectId(printer_id)})
+    
+    if printer is None:
+        return False, jsonify({"status": "error", "message": "Printer not found."}), 404
+    
+    return True, None

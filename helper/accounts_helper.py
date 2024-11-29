@@ -24,3 +24,18 @@ def check_available_mail(email):
     else:
         return False
     
+def check_is_student(student_id):
+    if not student_id:
+        return False, jsonify({
+            "status": "error",
+            "message": "All fields are required: student ID and page."
+        }), 400
+
+    student = accounts.accounts_collection().find_one({"_id": ObjectId(student_id), "role": "student"})
+    
+    if student is None:
+        return False, jsonify({"status": "error", "message": "Student not found."}), 404
+    if student["role"] != "student":
+        return False, jsonify({"status": "error", "message": "The account role is not 'student'."}), 403
+    
+    return True, None

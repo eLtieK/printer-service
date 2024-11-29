@@ -21,3 +21,12 @@ def get_accounts_by_role():
     role = data.get('role') 
     
     return account_controller.get_accounts_by_role(role)
+
+@spso_accounts_route.route('/<account_id>', methods=['PATCH'])
+@login_is_required
+@spso_is_required
+def update_account(account_id):
+    data = request.get_json() 
+
+    return account_controller.update_account(account_id, data)
+

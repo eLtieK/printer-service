@@ -34,7 +34,10 @@ def create_account(email, role):
         data["paper_count"] = 0
         data["print_history"] = []
         data["report_history"] = []
-
+    
+    if (role == "spso"):
+        data["maintenance_history"] = []
+        
     collection = accounts.accounts_collection()
 
     try:
