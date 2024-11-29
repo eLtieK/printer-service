@@ -3,8 +3,31 @@ from bson import ObjectId
 from flask import jsonify
 from models import printers, accounts
 from pymongo.errors import PyMongoError
-from helper import printers_help
+from helper import printers_help, accounts_helper
 
+def add_page(student_id, page):
+    try:
+        result = accounts_helper.check_is_student(student_id)
+        if(not result[0]):
+            return result[1]
+
+        accounts.accounts_collection().update_one(
+            {"_id": ObjectId(student_id)},
+            {
+                "$inc": {"paper_count": +page}
+            }
+        )
+        return jsonify({
+            "status": "success", 
+            "message": "Pages added successfully."
+        }), 200
+    
+    except PyMongoError as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    
 def report_issue(student_id, printer_id, issue):
     try:
         if not printer_id or not issue or not student_id:
@@ -12,6 +35,14 @@ def report_issue(student_id, printer_id, issue):
                 "status": "error",
                 "message": "All fields are required: Printer ID, issue description, student ID, and date."
             }), 400
+        
+        printer_result = printers_help.check_is_printer(printer_id)
+        if(not printer_result[0]):
+            return printer_result[1]
+        
+        student_result = accounts_helper.check_is_student(student_id)
+        if(not student_result[0]):
+            return student_result[1]
         
         printer_collection = printers.printers_collection()
         student_collection = accounts.accounts_collection()
@@ -39,21 +70,10 @@ def report_issue(student_id, printer_id, issue):
                 }}}
         )
 
-        if result_printer.matched_count == 1 and result_student.matched_count == 1:
-            return jsonify({
-                "status": "success",
-                "message": f"Reported issue for printer {printer_id} by student {student_id}."
-            }), 200
-        elif result_printer.matched_count == 0:
-            return jsonify({
-                "status": "error",
-                "message": f"Printer with ID {printer_id} not found."
-            }), 404
-        elif result_student.matched_count == 0:
-            return jsonify({
-                "status": "error",
-                "message": f"Student with ID {student_id} not found or printer {printer_id} not in student's history."
-            }), 404
+        return jsonify({
+            "status": "success",
+            "message": f"Reported issue for printer {printer_id} by student {student_id}."
+        }), 200
         
     except PyMongoError as e:
         return jsonify({
@@ -61,7 +81,7 @@ def report_issue(student_id, printer_id, issue):
             "message": str(e)
         }), 500
     
-def print(printer_id, student_id, file_name, page_count):
+def print_document(printer_id, student_id, file_name, page_count):
     try:
         # Fetch printer and student data from the database
         if not printer_id or not file_name or not student_id or not page_count:
@@ -75,17 +95,18 @@ def print(printer_id, student_id, file_name, page_count):
                 "status": "error",
                 "message": "Page count must be a positive integer."
             }), 400
-
-        printer = printers.printers_collection().find_one({"_id": ObjectId(printer_id)})
-        student = accounts.accounts_collection().find_one({"_id": ObjectId(student_id)})
         
         # Validate printer and student existence
-        if not printer:
-            return jsonify({"status": "error", "message": "Printer not found."}), 404
-        if not student:
-            return jsonify({"status": "error", "message": "Student not found."}), 404
-        if student["role"] != "student":
-            return jsonify({"status": "error", "message": "The account role is not 'student'."}), 403
+        printer_result = printers_help.check_is_printer(printer_id)
+        if(not printer_result[0]):
+            return printer_result[1]
+        
+        student_result = accounts_helper.check_is_student(student_id)
+        if(not student_result[0]):
+            return student_result[1]
+        
+        printer = printers.printers_collection().find_one({"_id": ObjectId(printer_id)})
+        student = accounts.accounts_collection().find_one({"_id": ObjectId(student_id)})
         
         # Check printer status
         if printer["status"] != "Ready":
