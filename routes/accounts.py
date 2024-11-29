@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, jsonify, request, session, redirect
+from flask import Blueprint, abort, jsonify, render_template, request, session, redirect
 from flask_cors import CORS
 import requests
 from controllers import accounts_controller
@@ -36,8 +36,8 @@ def login():
 def callback():
     google_auth.flow.fetch_token(authorization_response=request.url) #lấy token OAuth2
     
-    if not session["state"] == request.args["state"]: #xác thực tham số state
-        abort(500) 
+    # if "state" not in session or not session["state"] == request.args["state"]: #xác thực tham số state
+    #     abort(500) 
 
     #Xác thực và giải mã ID token để lấy thông tin người dùng
     credentials = google_auth.flow.credentials
@@ -59,14 +59,7 @@ def callback():
     session["role"] = accounts_controller.get_account_role(session["email"])
 
     #Chuyển hướng.
-    return jsonify({
-        "status": "success",
-        "data": {
-            "email": session.get("email"),
-            "role": session.get("role"),
-            "access_token": session.get("access_token")
-        }
-    })
+    return redirect("/momo/payment")
 
 @account_route.route('/logout')
 def logout():
@@ -82,3 +75,5 @@ def index():
 @login_is_required
 def protected_area():
     return "Protected! <a href='/account/logout'> <button>Logout</button> </a>"
+
+
