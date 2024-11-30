@@ -3,40 +3,25 @@ import hmac
 import uuid
 import requests
 from config import momo
-from flask import jsonify, redirect, request
+from flask import jsonify
+from controllers.spso.printer_controller import get_paper_price
+from controllers.student_controller import add_page
 
-def verify_signature(data, secret_key, signature):
-    raw_signature = "&".join([f"{key}={data[key]}" for key in sorted(data.keys()) if key != "signature"])
-    h = hmac.new(bytes(secret_key, 'ascii'), bytes(raw_signature, 'ascii'), hashlib.sha256)
-    return h.hexdigest() == signature
-
-def ipn_listener():
+def ipn_listener(query_params):
     try:
-        # Nhận dữ liệu từ MoMo
-        data = request.json
-        if not data:
-            return jsonify({"status": "error", "message": "No data received"}), 400
-
-        signature = data.pop("signature", None)
-
-        # Kiểm tra chữ ký (đảm bảo rằng thông báo là từ MoMo)
-        if not verify_signature(data, momo.secretKey, signature):
-            return jsonify({"status": "error", "message": "Invalid signature"}), 400
-
         # Kiểm tra trạng thái giao dịch
-        result_code = data.get("resultCode")
-        order_id = data.get("orderId")
+        result_code = query_params.get("resultCode")
+        extra_data = query_params.get("extraData")
+        student_id, page = extra_data.split()
 
-        if result_code == 0:  # Giao dịch thành công
-            # Cập nhật trạng thái giao dịch trong database
-            print(f"Payment successful for order {order_id}")
-            # Ví dụ: cập nhật trạng thái order trong database
-            # update_order_status(order_id, status="PAID")
-            return jsonify({"status": "success", "message": "Payment confirmed"}), 200
+        if result_code == "0":  # Giao dịch thành công
+            return add_page(student_id, int(page))
+            # return jsonify({
+            #     "data": query_params,
+            #     "message": "GET request received",
+            #     "status": "success"
+            # })
         else:  # Giao dịch thất bại
-            print(f"Payment failed for order {order_id} with resultCode {result_code}")
-            # Ví dụ: cập nhật trạng thái order trong database
-            # update_order_status(order_id, status="FAILED")
             return jsonify({"status": "error", "message": "Payment failed"}), 400
 
     except Exception as e:
@@ -51,10 +36,14 @@ def generate_signature(data, secret_key):
 def create_payment(payment_data):
     try:
         # Extract payment details from request body
-        amount = str(payment_data.get("amount", "50000"))
         order_info = payment_data.get("orderInfo", "Pay for papers")
         request_type = payment_data.get("requestType", "payWithMethod")
         auto_capture = payment_data.get("autoCapture", True)
+        student_id = payment_data.get("student_id")
+        page = int(payment_data.get("page"))
+
+        # amount min la 1000, neu thap hon thi payment ko chap nhan
+        amount = str(get_paper_price() * int(page))
 
         # Generate unique identifiers
         order_id = str(uuid.uuid4())
@@ -64,7 +53,7 @@ def create_payment(payment_data):
         raw_data = {
             "accessKey": momo.accessKey,
             "amount": amount,
-            "extraData": "",
+            "extraData": f"{student_id} {page}",
             "ipnUrl": momo.ipnUrl,
             "orderId": order_id,
             "orderInfo": order_info,
@@ -91,7 +80,7 @@ def create_payment(payment_data):
             "autoCapture": auto_capture,
             "orderInfo": order_info,
             "requestId": request_id,
-            "extraData": "",
+            "extraData": f"{student_id} {page}",
             "signature": signature
         }
     

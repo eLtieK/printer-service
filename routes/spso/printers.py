@@ -46,6 +46,12 @@ def update_printer(printer_id):
     data = request.get_json()
     return printer_controller.update_printer(printer_id, data)
 
+@spso_printers_route.route('/paper_price/<int:money>', methods=['PATCH'])
+@login_is_required
+@spso_is_required
+def update_paper_price(money):
+    return printer_controller.update_paper_price(money)
+
 @spso_printers_route.route('/export_printing_report', methods=['GET'])
 @login_is_required
 @spso_is_required
