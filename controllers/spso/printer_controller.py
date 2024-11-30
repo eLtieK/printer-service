@@ -118,6 +118,35 @@ def delete_printer(printer_id):
             "message": str(e)
         }), 500
     
+def update_paper_price(money):
+    collection = printers.printers_collection()
+
+    result = collection.update_one(
+        {"paper_price": {"$exists": True}},  # Điều kiện tìm kiếm
+        {"$set": {"paper_price": money}}     # Thay đổi giá trị
+    )
+
+    if result.matched_count == 0:
+        data = {"paper_price": money}
+        collection.insert_one(data)
+
+    return jsonify({
+            "status": "success",
+            "message": f"Updated page price."
+        }), 200
+
+def get_paper_price():
+    collection = printers.printers_collection()
+    result = collection.find_one(
+        {"paper_price": {"$exists": True}}  # Điều kiện tìm kiếm
+    )
+    
+    if result is None:
+        return 0
+    
+    return result["paper_price"]
+
+
 def update_printer(printer_id, data):
     try:
         collection = printers.printers_collection()

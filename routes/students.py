@@ -57,11 +57,4 @@ def add_page():
     page = data.get('page')
     return student_controller.add_page(student_id, page)
     
-@students_route.route('/create_payment', methods=['POST'])
-# @login_is_required
-# @student_is_required
-def create_payment():
-    data = request.get_json()
-
-    return payment_controller.create_payment(data)
     
