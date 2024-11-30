@@ -135,6 +135,18 @@ def update_paper_price(money):
             "message": f"Updated page price."
         }), 200
 
+def get_paper_price():
+    collection = printers.printers_collection()
+    result = collection.find_one(
+        {"paper_price": {"$exists": True}}  # Điều kiện tìm kiếm
+    )
+    
+    if result is None:
+        return 0
+    
+    return result["paper_price"]
+
+
 def update_printer(printer_id, data):
     try:
         collection = printers.printers_collection()
