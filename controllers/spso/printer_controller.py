@@ -3,7 +3,7 @@ from flask import jsonify
 from models import printers, accounts
 from pymongo.errors import PyMongoError
 from datetime import datetime, timedelta
-from helper import helper
+from helper import accounts_helper, helper, printers_help
 
 def create_printer(data):
     try:
@@ -261,25 +261,40 @@ def update_maintenance_history(printer_id, spso_id, data):
                 "status": "error",
                 "message": "All fields are required: SPSO ID, and details."
             }), 400
-        maintenance_entry = {
+        
+        printer_result = printers_help.check_is_printer(printer_id)
+        if(not printer_result[0]):
+            return printer_result[1], printer_result[2]
+        
+        spso_result = accounts_helper.check_is_spso(spso_id)
+        if(not spso_result[0]):
+            return spso_result[1], spso_result[2]
+        
+        maintenance_entry_printer = {
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "details": data.get("details"),
             "spso_id": ObjectId(spso_id)
         }
-        result = printers.printers_collection().update_one(
+        result_printer = printers.printers_collection().update_one(
             {"_id": ObjectId(printer_id)},
-            {"$push": {"maintenance_history": maintenance_entry}}
+            {"$push": {"maintenance_history": maintenance_entry_printer}}
         )
-        if result.matched_count == 1:
-            return jsonify({
-                "status": "success",
-                "message": f"Updated maintenance history for printer {printer_id}."
-            }), 200
-        else:
-            return jsonify({
-                "status": "error",
-                "message": f"No printer found with ID {printer_id}."
-            }), 404
+
+        maintenance_entry_spso = {
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "details": data.get("details"),
+            "printer_id": ObjectId(printer_id)
+        }
+
+        result_spso = accounts.accounts_collection().update_one(
+            {"_id": ObjectId(spso_id)},
+            {"$push": {"maintenance_history": maintenance_entry_spso}}
+        )
+
+        return jsonify({
+            "status": "success",
+            "message": f"Updated maintenance history for printer {printer_id}."
+        }), 200
     except PyMongoError as e:
         return jsonify({
             "status": "error",

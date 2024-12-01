@@ -9,7 +9,7 @@ def add_page(student_id, page):
     try:
         result = accounts_helper.check_is_student(student_id)
         if(not result[0]):
-            return result[1]
+            return result[1], result[2]
 
         accounts.accounts_collection().update_one(
             {"_id": ObjectId(student_id)},
@@ -38,11 +38,11 @@ def report_issue(student_id, printer_id, issue):
         
         printer_result = printers_help.check_is_printer(printer_id)
         if(not printer_result[0]):
-            return printer_result[1]
+            return printer_result[1], printer_result[2]
         
         student_result = accounts_helper.check_is_student(student_id)
         if(not student_result[0]):
-            return student_result[1]
+            return student_result[1], student_result[2]
         
         printer_collection = printers.printers_collection()
         student_collection = accounts.accounts_collection()
