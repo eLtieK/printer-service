@@ -62,14 +62,13 @@ def export_printing_report():
     Args:
         printer_id (str): Optional. ID of the printer to filter by.
         student_id (str): Optional. ID of the student to filter by.
-        date_range (str): Optional. Date range for the report. Can be 'daily', 'weekly', 'monthly', or 'custom'.
+        date_range (str): Optional. Date range for the report. Can be 'daily', 'weekly', 'monthly'.
         start_date (str): Optional. Start date for custom date range in 'YYYY-MM-DD' format.
         end_date (str): Optional. End date for custom date range in 'YYYY-MM-DD' format.
     """
-    data = request.get_json()
-    printer_id = data.get('printer_id')
-    student_id = data.get('student_id')
-    date_range = data.get('date_range', 'daily')
-    start_date = data.get('start_date')
-    end_date = data.get('end_date')
+    printer_id = request.args.get('printer_id')
+    student_id = request.args.get('student_id')
+    date_range = request.args.get('date_range')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
     return printer_controller.export_printing_report(printer_id, student_id, date_range, start_date, end_date)

@@ -182,9 +182,14 @@ def export_printing_report(printer_id, student_id, date_range, start_date, end_d
         if printer_id:
             query["_id"] = ObjectId(printer_id)
         if student_id:
-            query["print_history.student_id"] = ObjectId(student_id)
-        
-        if date_range == 'daily':
+            query["print_history.student_id"] = ObjectId(student_id)    
+        if start_date and end_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+        elif not date_range: 
+            start_date = datetime.min
+            end_date = datetime.now()
+        elif date_range == 'daily':
             start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             end_date = start_date + timedelta(days=1)
         elif date_range == 'weekly':
@@ -193,26 +198,28 @@ def export_printing_report(printer_id, student_id, date_range, start_date, end_d
         elif date_range == 'monthly':
             start_date = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             end_date = (start_date + timedelta(days=32)).replace(day=1)
-        elif start_date and end_date:
-            start_date = datetime.strptime(start_date, "%Y-%m-%d")
-            end_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
         else:
             return jsonify({
                 "status": "error",
-                "message": "Invalid date range or custom dates."
+                "message": "Invalid date range."
             }), 400
-        query["print_history.date"] = {"$gte": start_date.strftime("%Y-%m-%d %H:%M:%S"), "$lt": end_date.strftime("%Y-%m-%d %H:%M:%S")}
+
+        if start_date and end_date:
+            query["print_history.date"] = {"$gte": start_date.strftime("%Y-%m-%d %H:%M:%S"), "$lt": end_date.strftime("%Y-%m-%d %H:%M:%S")}
         
         printers_data = printers.printers_collection().find(query)
         report = []
+        total_pages_printed = 0
         
         for printer in printers_data:
+            total_pages = sum(job['pages'] for job in printer['print_history'])
+            total_pages_printed += total_pages
             printer_report = {
                 "printer_id": printer['_id'],
                 "name": printer['name'],
                 "model": printer['model'],
                 "location": printer['location'],
-                "total_pages_printed": sum(job['pages'] for job in printer['print_history']),
+                "total_pages_printed": total_pages,
                 "total_print_jobs": len(printer['print_history']),
                 "print_history": printer['print_history']
             }
@@ -221,7 +228,8 @@ def export_printing_report(printer_id, student_id, date_range, start_date, end_d
         
         return jsonify({
             "status": "success",
-            "data": report
+            "report": report,
+            "total_pages_printed": total_pages_printed
         }), 200
 
     except PyMongoError as e:
