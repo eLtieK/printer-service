@@ -237,3 +237,71 @@ def export_printing_report(printer_id, student_id, date_range, start_date, end_d
             "status": "error",
             "message": str(e)
         }), 500
+
+def get_all_issues():
+    try:
+        issues = []
+        printers_data = printers.printers_collection().find({"report_history": {"$exists": True, "$ne": []}})
+        for printer in printers_data:
+            for report in printer["report_history"]:
+                issues.append({
+                    "printer_id": str(printer["_id"]),
+                    "student_id": str(report["student_id"]),
+                    "issue": report["issue"],
+                    "date": report["date"]
+                })
+        return jsonify({"status": "success", "data": issues}), 200
+    except PyMongoError as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+def update_maintenance_history(printer_id, spso_id, data):
+    try:
+        if(not printer_id or not spso_id or not data.get("details")):
+            return jsonify({
+                "status": "error",
+                "message": "All fields are required: SPSO ID, and details."
+            }), 400
+        maintenance_entry = {
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "details": data.get("details"),
+            "spso_id": ObjectId(spso_id)
+        }
+        result = printers.printers_collection().update_one(
+            {"_id": ObjectId(printer_id)},
+            {"$push": {"maintenance_history": maintenance_entry}}
+        )
+        if result.matched_count == 1:
+            return jsonify({
+                "status": "success",
+                "message": f"Updated maintenance history for printer {printer_id}."
+            }), 200
+        else:
+            return jsonify({
+                "status": "error",
+                "message": f"No printer found with ID {printer_id}."
+            }), 404
+    except PyMongoError as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)}
+        ), 500
+
+def get_maintenance_history(printer_id):
+    try:
+        printer = printers.printers_collection().find_one({"_id": ObjectId(printer_id)}, {"maintenance_history": 1})
+        if not printer:
+            return jsonify({
+                "status": "error",
+                "message": f"No printer found with ID {printer_id}."
+            }), 404
+        
+        maintenance_history = helper.convert_objectid_to_string(printer.get("maintenance_history", []))
+        return jsonify({
+            "status": "success",
+            "data": maintenance_history
+        }), 200
+    except PyMongoError as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500

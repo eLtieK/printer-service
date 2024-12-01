@@ -72,3 +72,23 @@ def export_printing_report():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     return printer_controller.export_printing_report(printer_id, student_id, date_range, start_date, end_date)
+
+@spso_printers_route.route('/issues', methods=['GET'])
+@login_is_required
+@spso_is_required
+def get_all_issues():
+    return printer_controller.get_all_issues()
+
+@spso_printers_route.route('/<printer_id>/maintenance', methods=['PATCH'])
+@login_is_required
+@spso_is_required
+def update_maintenance_history(printer_id):
+    data = request.get_json()
+    spso_id = data.get('spso_id')
+    return printer_controller.update_maintenance_history(printer_id, spso_id, data)
+
+@spso_printers_route.route('/<printer_id>/maintenance_history', methods=['GET'])
+@login_is_required
+@spso_is_required
+def get_maintenance_history(printer_id):
+    return printer_controller.get_maintenance_history(printer_id)
