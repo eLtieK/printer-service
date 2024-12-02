@@ -77,7 +77,18 @@ def export_printing_report():
 @login_is_required
 @spso_is_required
 def get_all_issues():
-    return printer_controller.get_all_issues()
+    """
+    Get all issues with optional filters and date ranges.
+    
+    Args:
+        date_range (str): Optional. Date range for the issues. Can be 'daily', 'weekly', 'monthly'.
+        start_date (str): Optional. Start date for custom date range in 'YYYY-MM-DD' format.
+        end_date (str): Optional. End date for custom date range in 'YYYY-MM-DD' format.
+    """
+    date_range = request.args.get('date_range')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    return printer_controller.get_all_issues(date_range, start_date, end_date)
 
 @spso_printers_route.route('/<printer_id>/maintenance', methods=['PATCH'])
 @login_is_required
@@ -91,4 +102,15 @@ def update_maintenance_history(printer_id):
 @login_is_required
 @spso_is_required
 def get_maintenance_history(printer_id):
-    return printer_controller.get_maintenance_history(printer_id)
+    """
+    Get maintenance history with optional filters and date ranges.
+    
+    Args:
+        date_range (str): Optional. Date range for the maintenance history. Can be 'daily', 'weekly', 'monthly'.
+        start_date (str): Optional. Start date for custom date range in 'YYYY-MM-DD' format.
+        end_date (str): Optional. End date for custom date range in 'YYYY-MM-DD' format.
+    """
+    date_range = request.args.get('date_range')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    return printer_controller.get_maintenance_history(printer_id, date_range, start_date, end_date)

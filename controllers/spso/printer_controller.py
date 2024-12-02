@@ -238,10 +238,30 @@ def export_printing_report(printer_id, student_id, date_range, start_date, end_d
             "message": str(e)
         }), 500
 
-def get_all_issues():
+def get_all_issues(date_range=None, start_date=None, end_date=None):
     try:
+        query = {"report_history": {"$exists": True, "$ne": []}}
+        
+        if start_date and end_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+        elif date_range == 'daily':
+            start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date + timedelta(days=1)
+        elif date_range == 'weekly':
+            start_date = datetime.now() - timedelta(days=datetime.now().weekday())
+            end_date = start_date + timedelta(days=7)
+        elif date_range == 'monthly':
+            start_date = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_date = (start_date + timedelta(days=32)).replace(day=1)
+        else: 
+            start_date = datetime.min
+            end_date = datetime.now()
+        if start_date and end_date:
+            query["report_history.date"] = {"$gte": start_date.strftime("%Y-%m-%d %H:%M:%S"), "$lt": end_date.strftime("%Y-%m-%d %H:%M:%S")}
+        
         issues = []
-        printers_data = printers.printers_collection().find({"report_history": {"$exists": True, "$ne": []}})
+        printers_data = printers.printers_collection().find(query)
         for printer in printers_data:
             for report in printer["report_history"]:
                 issues.append({
@@ -301,16 +321,42 @@ def update_maintenance_history(printer_id, spso_id, data):
             "message": str(e)}
         ), 500
 
-def get_maintenance_history(printer_id):
+def get_maintenance_history(printer_id, date_range=None, start_date=None, end_date=None):
     try:
-        printer = printers.printers_collection().find_one({"_id": ObjectId(printer_id)}, {"maintenance_history": 1})
+        query = {"_id": ObjectId(printer_id)}
+        
+        if start_date and end_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+        elif date_range == 'daily':
+            start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date + timedelta(days=1)
+        elif date_range == 'weekly':
+            start_date = datetime.now() - timedelta(days=datetime.now().weekday())
+            end_date = start_date + timedelta(days=7)
+        elif date_range == 'monthly':
+            start_date = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_date = (start_date + timedelta(days=32)).replace(day=1)
+        else:
+            start_date = datetime.min
+            end_date = datetime.now()
+        
+        if start_date and end_date:
+            query["maintenance_history.date"] = {"$gte": start_date.strftime("%Y-%m-%d %H:%M:%S"), "$lt": end_date.strftime("%Y-%m-%d %H:%M:%S")}
+        
+        printer = printers.printers_collection().find_one({"_id": ObjectId(printer_id)})
         if not printer:
             return jsonify({
                 "status": "error",
                 "message": f"No printer found with ID {printer_id}."
             }), 404
         
-        maintenance_history = helper.convert_objectid_to_string(printer.get("maintenance_history", []))
+        maintenance_history = [
+            entry for entry in printer.get("maintenance_history", [])
+            if start_date <= datetime.strptime(entry["date"], "%Y-%m-%d %H:%M:%S") < end_date
+        ]
+        
+        maintenance_history = helper.convert_objectid_to_string(maintenance_history)
         return jsonify({
             "status": "success",
             "data": maintenance_history
