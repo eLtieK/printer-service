@@ -21,6 +21,13 @@ def modify_data():
 
     return accounts_controller.create_or_alter_account(email, name, phone)
 
+@account_route.route('/delete', methods=['DELETE'])
+def delete_account():
+    data = request.get_json() 
+    email = data.get('email') 
+
+    return accounts_controller.delete_account(email)
+
 @account_route.route('/create', methods=['POST'])
 def create():
     data = request.get_json() 

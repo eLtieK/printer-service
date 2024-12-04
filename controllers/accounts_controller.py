@@ -5,6 +5,26 @@ from models import accounts, printers
 from pymongo.errors import PyMongoError
 from helper import accounts_helper, helper
     
+def delete_account(email):
+    try:
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
+
+        # Xóa tài khoản bằng email
+        result = accounts.accounts_collection().delete_one({"email": email})
+
+        if result.deleted_count > 0:
+            return jsonify({"message": "Account deleted successfully"}), 200
+        else:
+            return jsonify({"error": "Account not found"}), 404
+
+    except PyMongoError as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
+    except Exception as e:
+        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+
+
 def create_or_alter_account(email, name, phone):
     if not email or not name or not phone: #Check xem format của request có đúng không
         return jsonify({
