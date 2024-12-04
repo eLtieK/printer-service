@@ -58,8 +58,12 @@ def callback():
     session["email"] = id_info.get("email")
     session["role"] = accounts_controller.get_account_role(session["email"])
 
-    #Chuyển hướng.
-    return redirect("/momo/payment")
+    # Trả về token và thông tin người dùng dưới dạng JSON
+    return jsonify({
+        "access_token": session["access_token"],
+        "email": session["email"],
+        "role": session["role"]
+    })
 
 @account_route.route('/logout')
 def logout():

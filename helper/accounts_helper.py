@@ -39,3 +39,19 @@ def check_is_student(student_id):
         return False, jsonify({"status": "error", "message": "The account role is not 'student'."}), 403
     
     return True, None
+    
+def check_is_spso(spso_id):
+    if not spso_id:
+        return False, jsonify({
+            "status": "error",
+            "message": "All fields are required: spso ID and page."
+        }), 400
+
+    spso = accounts.accounts_collection().find_one({"_id": ObjectId(spso_id), "role": "spso"})
+    
+    if spso is None:
+        return False, jsonify({"status": "error", "message": "spso not found."}), 404
+    if spso["role"] != "spso":
+        return False, jsonify({"status": "error", "message": "The account role is not 'spso'."}), 403
+    
+    return True, None
