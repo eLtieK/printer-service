@@ -31,7 +31,7 @@ def report_issue():
 def get_all_printers():
     return printer_controller.get_all_printers()
 
-@students_route.route('/printer<printer_id>', methods=['GET'])
+@students_route.route('/printer/<printer_id>', methods=['GET'])
 @login_is_required
 @student_is_required
 def get_printer(printer_id):

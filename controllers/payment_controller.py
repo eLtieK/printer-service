@@ -15,12 +15,13 @@ def ipn_listener(query_params):
         student_id, page = extra_data.split()
 
         if result_code == "0":  # Giao dịch thành công
-            return add_page(student_id, int(page))
-            # return jsonify({
-            #     "data": query_params,
-            #     "message": "GET request received",
-            #     "status": "success"
-            # })
+            #return add_page(student_id, int(page))
+            return jsonify({
+                "status": "success",
+                "message": "Transaction successful",
+                "student_id": student_id,
+                "page": page
+            }), 200
         else:  # Giao dịch thất bại
             return jsonify({"status": "error", "message": "Payment failed"}), 400
 
