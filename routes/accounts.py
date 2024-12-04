@@ -41,7 +41,7 @@ def callback():
 
     #Xác thực và giải mã ID token để lấy thông tin người dùng
     credentials = google_auth.flow.credentials
-    session["access_token"] = credentials.token
+    access_token = credentials.token
 
     request_session = requests.session()
     cached_session = cachecontrol.CacheControl(request_session)
@@ -55,15 +55,19 @@ def callback():
     )
     
     #Lưu thông tin người dùng vào session
-    session["email"] = id_info.get("email")
-    session["role"] = accounts_controller.get_account_role(session["email"])
+    email = id_info.get("email")
+    role = accounts_controller.get_account_role(email)
 
     # Trả về token và thông tin người dùng dưới dạng JSON
-    return jsonify({
-        "access_token": session["access_token"],
-        "email": session["email"],
-        "role": session["role"]
-    })
+    frontend_url = ''
+    if(role == 'spso') :
+        frontend_url = "http://localhost:3000/spso"
+    elif(role == 'student') :
+        frontend_url = "http://localhost:3000/student"
+    elif(role == 'admin') :
+        frontend_url = "http://localhost:3000/admin"
+
+    return redirect(f"{frontend_url}?access_token={session['access_token']}&access_token={access_token}&role={role}")
 
 @account_route.route('/logout')
 def logout():

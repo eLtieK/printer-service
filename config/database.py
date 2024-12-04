@@ -1,7 +1,11 @@
 from pymongo import MongoClient
 import os
 url = os.getenv('MONGO_URL')
-client = MongoClient(url)
+client = MongoClient(
+    url,
+    tls=True,
+    tlsAllowInvalidCertificates=True
+)
 db = client["printer"]
 
 def get_db():
