@@ -67,7 +67,7 @@ def callback():
     elif(role == 'admin') :
         frontend_url = "http://localhost:3000/admin"
 
-    return redirect(f"{frontend_url}?access_token={session['access_token']}&access_token={access_token}&role={role}")
+    return redirect(f"{frontend_url}?access_token={access_token}&role={role}")
 
 @account_route.route('/logout')
 def logout():
