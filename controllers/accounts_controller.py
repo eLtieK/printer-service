@@ -5,6 +5,42 @@ from models import accounts, printers
 from pymongo.errors import PyMongoError
 from helper import accounts_helper, helper
     
+def create_or_alter_account(email, name, phone):
+    if not email or not name or not phone: #Check xem format của request có đúng không
+        return jsonify({
+            "status": "error",
+            "message": "Email, name and phone are required"
+        }), 400
+    
+    
+    # Get the accounts collection
+    accounts_collection = accounts.accounts_collection()
+
+    # Create or update the account
+    try:
+        result = accounts_collection.update_one(
+            {"email": email},  # Query to find an account with the given email
+            {"$set": {"name": name, "phone": phone}},  # Update or create the document
+            upsert=True  # If no document matches, create one
+        )
+
+        if result.matched_count > 0:
+            return jsonify({
+                "status": "success",
+                "message": "Account updated successfully"
+            }), 200
+        else:
+            return jsonify({
+                "status": "success",
+                "message": "Account created successfully"
+            }), 201
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"An error occurred: {str(e)}"
+        }), 500
+    
 def create_account(email, role):
     if not email or not role: #Check xem format của request có đúng không
         return jsonify({

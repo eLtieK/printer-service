@@ -12,6 +12,14 @@ account_tuple = (Blueprint('account_route', __name__), '/account')
 account_route, prefix_route = account_tuple
 CORS(account_route, supports_credentials=True, origins=["http://localhost:3000"]) #link toi fe
 
+@account_route.route('/modify_data', methods=['PUT'])
+def modify_data():
+    data = request.get_json() 
+    email = data.get('email') 
+    name = data.get('name')
+    phone = data.get('phone')
+
+    return accounts_controller.create_or_alter_account(email, name, phone)
 
 @account_route.route('/create', methods=['POST'])
 def create():

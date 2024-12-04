@@ -89,6 +89,9 @@ def get_all_printers():
         printer_list = []
 
         for printer in collection.find():
+            if 'paper_price' in printer:
+                continue  # Skip this printer
+            
             printer = helper.convert_objectid_to_string(printer)
             printer_list.append(printer)
 
