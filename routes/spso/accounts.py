@@ -17,8 +17,7 @@ CORS(spso_accounts_route, supports_credentials=True, origins=["http://localhost:
 @login_is_required
 @spso_is_required
 def get_accounts_by_role():
-    data = request.get_json() 
-    role = data.get('role') 
+    role = request.args.get('role') 
     
     return account_controller.get_accounts_by_role(role)
 
