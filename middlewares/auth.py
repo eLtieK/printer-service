@@ -17,8 +17,8 @@ def login_is_required(function):
 
 def spso_is_required(function):
     def wrapper(*args, **kwargs):
-        role = request.headers.get('Role')
-        if not role or role != "Spso" or role != "Admin":
+        role = request.headers.get('role')
+        if not role or role != "spso" or role != "admin":
             return abort(403)  # Authorization required
         else: 
             return function(*args, **kwargs)
@@ -27,8 +27,8 @@ def spso_is_required(function):
 
 def student_is_required(function):
     def wrapper(*args, **kwargs):
-        role = request.headers.get('Role')
-        if not role or role != "Student":
+        role = request.headers.get('role')
+        if not role or role != "student":
             return abort(403)  # Authorization required
         else: 
             return function(*args, **kwargs)
