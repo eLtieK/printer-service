@@ -117,7 +117,7 @@ def print_document(printer_id, student_id, file_name, page_count):
         student = accounts.accounts_collection().find_one({"_id": ObjectId(student_id)})
         
         # Check printer status
-        if printer["status"] != "Ready":
+        if printer["status"] != "Enabled":
             return jsonify({"status": "error", "message": f"Printer is not ready: {printer['status']}."}), 400
         
         # Check paper availability

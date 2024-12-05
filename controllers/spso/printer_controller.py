@@ -7,7 +7,7 @@ from helper import accounts_helper, helper, printers_help
 
 def get_printer_name_location(id):
     try:
-        collection = printers.accounts_collection()
+        collection = printers.printers_collection()
         printer = collection.find_one({
             "_id": ObjectId(id)
         })
