@@ -231,24 +231,28 @@ def export_printing_report(printer_id, student_id, date_range, start_date, end_d
         total_pages_printed = 0
         
         for printer in printers_data:
-            total_pages = sum(job['pages'] for job in printer['print_history'])
-            total_pages_printed += total_pages
-            printer_report = {
-                "printer_id": printer['_id'],
-                "name": printer['name'],
-                "model": printer['model'],
-                "location": printer['location'],
-                "total_pages_printed": total_pages,
-                "total_print_jobs": len(printer['print_history']),
-                "print_history": printer['print_history']
-            }
-            printer_report = helper.convert_objectid_to_string(printer_report)
-            report.append(printer_report)
+            printer_name = printer["name"] 
+            printer_location = printer["location"] 
+            printer_id_data = printer["_id"] 
+            for history in printer['print_history']:
+                # printer_report = {
+                #     "printer_id": printer['_id'],
+                #     "name": printer['name'],
+                #     "model": printer['model'],
+                #     "location": printer['location'],
+                #     "total_pages_printed": total_pages,
+                #     "total_print_jobs": len(printer['print_history']),
+                #     "print_history": printer['print_history']
+                # }
+                history["printer name"] = printer_name
+                history["printer location"] = printer_location
+                history["printer_id"] = printer_id_data
+                printer_report = helper.convert_objectid_to_string(history)
+                report.append(printer_report)
         
         return jsonify({
             "status": "success",
             "report": report,
-            "total_pages_printed": total_pages_printed
         }), 200
 
     except PyMongoError as e:
