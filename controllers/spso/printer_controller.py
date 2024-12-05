@@ -5,6 +5,22 @@ from pymongo.errors import PyMongoError
 from datetime import datetime, timedelta
 from helper import accounts_helper, helper, printers_help
 
+def get_printer_name_location(id):
+    try:
+        collection = printers.accounts_collection()
+        printer = collection.find_one({
+            "_id": ObjectId(id)
+        })
+
+        return {
+            "name": printer["name"],
+            "location": printer["location"]
+        }
+    
+    except PyMongoError as e:
+        print(str(e))
+        return ''
+
 def create_printer(data):
     try:
         name = data.get('name')
@@ -271,7 +287,11 @@ def get_all_issues(date_range=None, start_date=None, end_date=None):
                     "printer_id": str(printer["_id"]),
                     "student_id": str(report["student_id"]),
                     "issue": report["issue"],
-                    "date": report["date"]
+                    "date": report["date"],
+                    "student name": report["name"],
+                    "student email": report["email"],
+                    "printer name": printer["name"],
+                    "printer location": printer["location"],
                 })
         return jsonify({"status": "success", "data": issues}), 200
     except PyMongoError as e:

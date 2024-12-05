@@ -5,6 +5,22 @@ from models import accounts, printers
 from pymongo.errors import PyMongoError
 from helper import accounts_helper, helper
     
+def get_account_data(id):
+    try:
+        collection = accounts.accounts_collection()
+        account = collection.find_one({
+            "_id": ObjectId(id)
+        })
+
+        return {
+            "name": account["name"],
+            "email": account["email"]
+        }
+    
+    except PyMongoError as e:
+        print(str(e))
+        return ''
+
 def delete_account(email):
     try:
         if not email:

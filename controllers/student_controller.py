@@ -4,6 +4,8 @@ from flask import jsonify
 from models import printers, accounts
 from pymongo.errors import PyMongoError
 from helper import printers_help, accounts_helper
+from controllers import accounts_controller
+from controllers.spso import printer_controller
 
 def add_page(student_id, page):
     try:
@@ -48,23 +50,29 @@ def report_issue(student_id, printer_id, issue):
         student_collection = accounts.accounts_collection()
 
         date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        student_data = accounts_controller.get_account_data(student_id)
         # Cập nhật báo cáo trong printer collection
         result_printer = printer_collection.update_one(
             {"_id": ObjectId(printer_id)},
             {"$push": {
                 "report_history": {
                     "student_id": ObjectId(student_id),
+                    "name": student_data["name"],
+                    "email": student_data["email"],
                     "issue": issue, 
                     "date": date
                 }}}
         )
 
         # Cập nhật báo cáo trong student collection
+        printer_data = printer_controller.get_printer_name_location(printer_id)
         result_student = student_collection.update_one(
             {"_id": ObjectId(student_id)},
             {"$push": {
                 "report_history": {
                     "printer_id": ObjectId(printer_id),
+                    "name": printer_data["name"],
+                    "location": printer_data["location"],
                     "issue": issue, 
                     "date": date
                 }}}
@@ -126,11 +134,14 @@ def print_document(printer_id, student_id, file_name, page_count):
 
         # Update printer and student data
         # Update printer data
+        student_data = accounts_controller.get_account_data(student_id)
         printer_entry = {
             "file_name": file_name,
             "pages": page_count,
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "student_id": ObjectId(student_id)
+            "student_id": ObjectId(student_id),
+            "name": student_data["name"],
+            "email": student_data["email"]
         }
         ink_to_use = printers_help.calculate_ink_usage(printer["ink"], page_count)
         printers.printers_collection().update_one(
@@ -145,11 +156,14 @@ def print_document(printer_id, student_id, file_name, page_count):
         )
 
         # Update student print history
+        printer_data = printer_controller.get_printer_name_location(printer_id)
         student_entry = {
             "file_name": file_name,
             "pages": page_count,
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "printer_id": ObjectId(printer_id)
+            "printer_id": ObjectId(printer_id),
+            "name": printer_data["name"],
+            "location": printer_data["location"]
         }
         accounts.accounts_collection().update_one(
             {"_id": ObjectId(student_id)},
