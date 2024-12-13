@@ -54,7 +54,7 @@ def update_paper_price(money):
 
 @spso_printers_route.route('/export_printing_report', methods=['GET'])
 @login_is_required
-@spso_is_required
+# @spso_is_required
 def export_printing_report():
     """
     Export printing report with optional filters and date ranges.
